@@ -1,0 +1,10 @@
+{
+  "id": "savehub-sync",
+  "name": "SaveHub Sync",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "Sync notes from your SaveHub Telegram bot into your Obsidian vault automatically.",
+  "author": "SaveHub",
+  "authorUrl": "https://t.me/savehubbot",
+  "isDesktopOnly": false
+}

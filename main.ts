@@ -69,7 +69,7 @@ export default class SaveHubPlugin extends Plugin {
 
     this.addCommand({
       id: "sync-notes",
-      name: "Sync notes from SaveHub",
+      name: "Sync notes",
       callback: () => { void this.syncNotes(); },
     });
 
@@ -130,11 +130,11 @@ export default class SaveHubPlugin extends Plugin {
 
   async syncNotes() {
     if (!this.settings.token) {
-      new Notice("SaveHub: token not set. Open plugin settings to configure.");
+      new Notice("Token not set. Open plugin settings to configure.");
       return;
     }
     if (!this.settings.apiUrl) {
-      new Notice("SaveHub: API URL not set. Open plugin settings to configure.");
+      new Notice("API URL not set. Open plugin settings to configure.");
       return;
     }
 
@@ -153,7 +153,7 @@ export default class SaveHubPlugin extends Plugin {
 
       if (resp.status === 401) {
         this.updateStatusBar("error");
-        new Notice("SaveHub: invalid token. Get a new one with /connect.");
+        new Notice("Invalid token. Get a new one with /connect.");
         return;
       }
       if (resp.status < 200 || resp.status >= 300) {
@@ -422,7 +422,7 @@ class SaveHubSettingTab extends PluginSettingTab {
       .setDesc("Your SaveHub bot server URL (e.g. https://savehub.up.railway.app)")
       .addText((text) =>
         text
-          .setPlaceholder("https://...")
+          .setPlaceholder("https://example.com")
           .setValue(this.plugin.settings.apiUrl)
           .onChange(async (value) => {
             this.plugin.settings.apiUrl = value.trim().replace(/\/$/, "");
@@ -432,7 +432,7 @@ class SaveHubSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Token")
-      .setDesc("Send /connect to the SaveHub bot to get your token")
+      .setDesc("Send /connect to the bot to get your token")
       .addText((text) => {
         text.inputEl.type = "password";
         text
@@ -453,7 +453,7 @@ class SaveHubSettingTab extends PluginSettingTab {
       .setDesc("Folder in your vault where notes will be created")
       .addText((text) =>
         text
-          .setPlaceholder("SaveHub")
+          .setPlaceholder("")
           .setValue(this.plugin.settings.vaultFolder)
           .onChange(async (value) => {
             this.plugin.settings.vaultFolder = value.trim() || "SaveHub";
@@ -482,7 +482,7 @@ class SaveHubSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Create dashboard note")
       .setDesc(
-        "Create a summary note with dataview queries in your SaveHub folder on every sync."
+        "Create a summary note with dataview queries in the vault folder on every sync."
       )
       .addToggle((toggle) =>
         toggle
@@ -546,7 +546,7 @@ class SaveHubSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Sync now")
-      .setDesc("Pull the latest notes from SaveHub immediately")
+      .setDesc("Pull the latest notes immediately")
       .addButton((btn) =>
         btn
           .setButtonText("Sync")

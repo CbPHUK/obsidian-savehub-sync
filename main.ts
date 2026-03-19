@@ -6,6 +6,7 @@ import {
   Setting,
   TFile,
   normalizePath,
+  requestUrl,
 } from "obsidian";
 
 // ─── Settings ────────────────────────────────────────────────────────────────
@@ -69,7 +70,7 @@ export default class SaveHubPlugin extends Plugin {
     this.addCommand({
       id: "sync-notes",
       name: "Sync notes from SaveHub",
-      callback: () => this.syncNotes(),
+      callback: () => { void this.syncNotes(); },
     });
 
     this.addSettingTab(new SaveHubSettingTab(this.app, this));
@@ -88,8 +89,8 @@ export default class SaveHubPlugin extends Plugin {
   startAutoSync() {
     this.stopAutoSync();
     const ms = this.settings.syncInterval * 60 * 1000;
-    this.syncNotes();
-    this.syncTimer = window.setInterval(() => this.syncNotes(), ms);
+    void this.syncNotes();
+    this.syncTimer = window.setInterval(() => { void this.syncNotes(); }, ms);
   }
 
   stopAutoSync() {
@@ -144,18 +145,22 @@ export default class SaveHubPlugin extends Plugin {
         url.searchParams.set("since", this.settings.lastSync);
       }
 
-      const res = await fetch(url.toString(), {
+      const resp = await requestUrl({
+        url: url.toString(),
         headers: { Authorization: `Bearer ${this.settings.token}` },
+        throw: false,
       });
 
-      if (res.status === 401) {
+      if (resp.status === 401) {
         this.updateStatusBar("error");
         new Notice("SaveHub: invalid token. Get a new one with /connect.");
         return;
       }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (resp.status < 200 || resp.status >= 300) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
 
-      const data: SyncResponse = await res.json();
+      const data: SyncResponse = resp.json;
       const count = await this.writeNotes(data.notes);
 
       this.settings.lastSync = data.server_time;
@@ -171,7 +176,7 @@ export default class SaveHubPlugin extends Plugin {
         new Notice(`SaveHub: synced ${count} note${count === 1 ? "" : "s"}`);
     } catch (e) {
       this.updateStatusBar("error");
-      new Notice(`SaveHub sync error: ${e.message}`);
+      new Notice(`SaveHub sync error: ${(e as Error).message}`);
     }
   }
 
@@ -407,11 +412,10 @@ class SaveHubSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "SaveHub Sync" });
 
     // ── Connection ──────────────────────────────────────────────────────────
 
-    containerEl.createEl("h3", { text: "Connection" });
+    new Setting(containerEl).setName("Connection").setHeading();
 
     new Setting(containerEl)
       .setName("API URL")
@@ -432,7 +436,7 @@ class SaveHubSettingTab extends PluginSettingTab {
       .addText((text) => {
         text.inputEl.type = "password";
         text
-          .setPlaceholder("paste token here")
+          .setPlaceholder("Paste token here")
           .setValue(this.plugin.settings.token)
           .onChange(async (value) => {
             this.plugin.settings.token = value.trim();
@@ -442,7 +446,7 @@ class SaveHubSettingTab extends PluginSettingTab {
 
     // ── Storage ─────────────────────────────────────────────────────────────
 
-    containerEl.createEl("h3", { text: "Storage" });
+    new Setting(containerEl).setName("Storage").setHeading();
 
     new Setting(containerEl)
       .setName("Vault folder")
@@ -460,12 +464,12 @@ class SaveHubSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Filename format")
       .setDesc(
-        "id-first: \"42 Note title.md\" · title-first: \"Note title (42).md\""
+        "ID first: \"42 Note title.md\" · Title first: \"Note title (42).md\""
       )
       .addDropdown((drop) =>
         drop
-          .addOption("id-first", "ID first (42 Note title)")
-          .addOption("title-first", "Title first (Note title (42))")
+          .addOption("id-first", "ID first (42 note title)")
+          .addOption("title-first", "Title first (note title (42))")
           .setValue(this.plugin.settings.filenameFormat)
           .onChange(async (value) => {
             this.plugin.settings.filenameFormat = value as "id-first" | "title-first";
@@ -475,7 +479,7 @@ class SaveHubSettingTab extends PluginSettingTab {
 
     // ── Features ────────────────────────────────────────────────────────────
 
-    containerEl.createEl("h3", { text: "Features" });
+    new Setting(containerEl).setName("Features").setHeading();
 
     new Setting(containerEl)
       .setName("Create dashboard note")
@@ -522,7 +526,7 @@ class SaveHubSettingTab extends PluginSettingTab {
 
     // ── Sync schedule ───────────────────────────────────────────────────────
 
-    containerEl.createEl("h3", { text: "Sync" });
+    new Setting(containerEl).setName("Sync").setHeading();
 
     new Setting(containerEl)
       .setName("Auto-sync interval (minutes)")
@@ -550,7 +554,7 @@ class SaveHubSettingTab extends PluginSettingTab {
         btn
           .setButtonText("Sync")
           .setCta()
-          .onClick(() => this.plugin.syncNotes())
+          .onClick(() => { void this.plugin.syncNotes(); })
       );
 
     if (this.plugin.settings.lastSync) {

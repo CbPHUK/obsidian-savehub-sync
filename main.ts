@@ -130,11 +130,11 @@ export default class SaveHubPlugin extends Plugin {
 
   async syncNotes() {
     if (!this.settings.token) {
-      new Notice("SaveHub: token not set. Configure in Settings → SaveHub Sync.");
+      new Notice("SaveHub: token not set. Open plugin settings to configure.");
       return;
     }
     if (!this.settings.apiUrl) {
-      new Notice("SaveHub: API URL not set. Configure in Settings → SaveHub Sync.");
+      new Notice("SaveHub: API URL not set. Open plugin settings to configure.");
       return;
     }
 
@@ -463,9 +463,7 @@ class SaveHubSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Filename format")
-      .setDesc(
-        "ID first: \"42 Note title.md\" · Title first: \"Note title (42).md\""
-      )
+      .setDesc("Lead with note ID or note title")
       .addDropdown((drop) =>
         drop
           .addOption("id-first", "ID first (42 note title)")
@@ -484,8 +482,7 @@ class SaveHubSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Create dashboard note")
       .setDesc(
-        "Generate _Dashboard.md at the root of your SaveHub folder on every sync. " +
-        "Requires the Dataview plugin for live queries."
+        "Create a summary note with dataview queries in your SaveHub folder on every sync."
       )
       .addToggle((toggle) =>
         toggle
